@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taman Notice Board · Taman Melur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=Special+Elite&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1F2328;
+    --blue: #1D3FA8;
+    --red: #D92D20;
+    --green: #0E8A4F;
+    --indigo: #4E46C9;
+    --paper: #FFFDF7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", system-ui, sans-serif;
+    color: var(--ink);
+    background: radial-gradient(circle at 50% 30%, #3D2E21 0%, #2A1F15 55%, #1E1711 100%);
+    min-height: 100vh;
+    padding: 26px 14px 60px;
+  }
+  .board {
+    max-width: 1180px;
+    margin: 0 auto;
+    border-radius: 14px;
+    padding: 16px;
+    background:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 2px, rgba(255,255,255,.05) 2px 5px, rgba(0,0,0,0) 5px 13px),
+      linear-gradient(180deg, #7A4D2C 0%, #6B4226 55%, #4A2C17 100%);
+    box-shadow: 0 30px 70px rgba(0,0,0,.65), inset 0 2px 3px rgba(255,255,255,.28), inset 0 -3px 6px rgba(0,0,0,.5);
+  }
+  .cork {
+    position: relative;
+    border-radius: 8px;
+    padding: 26px 22px 40px;
+    background:
+      radial-gradient(rgba(70,42,20,.55) 1.3px, transparent 1.6px) 0 0/9px 9px,
+      radial-gradient(rgba(255,238,205,.35) 1.1px, transparent 1.4px) 4px 5px/11px 11px,
+      radial-gradient(rgba(60,35,15,.35) 1.6px, transparent 2px) 2px 2px/16px 16px,
+      #C49A6C;
+    box-shadow: inset 0 4px 18px rgba(40,22,8,.55), inset 0 -4px 14px rgba(40,22,8,.4);
+  }
+
+  /* ---------- HEADER SIGN ---------- */
+  .sign {
+    position: relative;
+    width: max-content;
+    max-width: 100%;
+    margin: 0 auto 10px;
+    background: var(--paper);
+    padding: 18px 34px 14px;
+    text-align: center;
+    transform: rotate(-0.6deg);
+    box-shadow: 0 6px 16px rgba(0,0,0,.35);
+  }
+  .sign::before {
+    content: "";
+    position: absolute;
+    top: -9px; left: 50%;
+    transform: translateX(-50%) rotate(-1.5deg);
+    width: 120px; height: 22px;
+    background: rgba(255,245,200,.62);
+    box-shadow: 0 1px 3px rgba(0,0,0,.18);
+  }
+  .sign .kicker {
+    font-family: "Special Elite", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    color: #5a5a52;
+  }
+  .sign h1 {
+    font-family: "Archivo Black", sans-serif;
+    font-size: clamp(1.5rem, 4.6vw, 2.5rem);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin: 4px 0 6px;
+  }
+  .sign h1 .red { color: var(--red); }
+  .sign .hand {
+    font-family: "Caveat", cursive;
+    font-size: 1.15rem;
+    color: var(--blue);
+  }
+
+  /* ---------- FILTER TAGS ---------- */
+  .filters {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 26px 0 30px;
+  }
+  .tag {
+    position: relative;
+    border: none;
+    cursor: pointer;
+    font-family: "Inter", sans-serif;
+    font-weight: 600;
+    font-size: 0.86rem;
+    padding: 9px 18px 11px;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.3);
+    transform: rotate(var(--tilt));
+    transition: transform .15s, box-shadow .15s, outline-color .15s;
+    outline: 3px solid transparent;
+    outline-offset: -1px;
+    color: var(--ink);
+  }
+  .tag.all    { --tilt: -1.6deg; background: #FFF6C9; }
+  .tag.urgent { --tilt: 1.4deg;  background: #FFE1DE; }
+  .tag.community { --tilt: -0.8deg; background: #D9F5E5; }
+  .tag .count {
+    font-family: "Caveat", cursive;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--blue);
+    margin-left: 6px;
+  }
+  .tag:hover { transform: rotate(0deg) translateY(-2px); }
+  .tag.active {
+    transform: rotate(0deg) translateY(-4px);
+    box-shadow: 0 8px 18px rgba(0,0,0,.4);
+    outline-color: #000;
+  }
+  .tag .tick {
+    display: none;
+    position: absolute;
+    top: -8px; right: -8px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #000;
+    color: #fff;
+    font-size: 0.7rem;
+    line-height: 20px;
+    text-align: center;
+  }
+  .tag.active .tick { display: block; }
+
+  /* ---------- COLUMNS ---------- */
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  @media (min-width: 900px) {
+    .columns { grid-template-columns: 1.05fr 1fr; align-items: start; }
+    .col-details { position: sticky; top: 16px; }
+  }
+  .col-label {
+    display: inline-block;
+    background: #1b1b1b;
+    color: #f2f2ee;
+    font-family: "Special Elite", monospace;
+    font-size: 0.82rem;
+    letter-spacing: 1.5px;
+    padding: 7px 16px;
+    margin-bottom: 18px;
+    transform: rotate(-1.1deg);
+    box-shadow: 0 3px 8px rgba(0,0,0,.4);
+  }
+  .col-details .col-label { transform: rotate(0.9deg); }
+
+  /* ---------- NOTICE CARDS ---------- */
+  .cards { display: flex; flex-direction: column; gap: 26px; }
+  .card {
+    position: relative;
+    background: var(--cardbg, var(--paper));
+    padding: 26px 20px 16px;
+    border-radius: 2px;
+    cursor: pointer;
+    transform: rotate(var(--tilt));
+    box-shadow: 0 6px 14px rgba(0,0,0,.32);
+    transition: transform .16s, box-shadow .16s, outline-color .16s;
+    outline: 3px solid transparent;
+    outline-offset: -1px;
+  }
+  .card::after { /* folded corner */
+    content: "";
+    position: absolute;
+    right: 0; bottom: 0;
+    border-style: solid;
+    border-width: 0 0 22px 22px;
+    border-color: transparent transparent rgba(0,0,0,.14) transparent;
+    filter: drop-shadow(-2px -2px 2px rgba(0,0,0,.12));
+  }
+  .card:hover { transform: rotate(0deg) translateY(-4px); box-shadow: 0 12px 26px rgba(0,0,0,.45); }
+  .card.selected {
+    transform: rotate(0deg) translateY(-4px);
+    outline-color: #000;
+    box-shadow: 0 12px 26px rgba(0,0,0,.45);
+  }
+  .pin {
+    position: absolute;
+    top: -11px; left: 50%;
+    width: 22px; height: 22px;
+    margin-left: -11px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 34% 30%, #ffffff 0%, var(--pin, #1D3FA8) 38%, rgba(0,0,0,.4) 100%);
+    box-shadow: 0 3px 5px rgba(0,0,0,.45);
+  }
+  .cat {
+    font-family: "Special Elite", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--cat, var(--blue));
+  }
+  .card h3 { font-size: 1.02rem; font-weight: 700; margin: 5px 0 4px; line-height: 1.3; }
+  .cdate { font-family: "Special Elite", monospace; font-size: 0.74rem; color: #6b6b63; }
+  .read-hint {
+    font-family: "Caveat", cursive;
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: var(--blue);
+    margin-top: 7px;
+  }
+  .stamp {
+    position: absolute;
+    top: 12px; right: 12px;
+    font-family: "Archivo Black", sans-serif;
+    font-size: 0.58rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--cat, var(--blue));
+    border: 2.5px solid var(--cat, var(--blue));
+    border-radius: 4px;
+    padding: 3px 8px;
+    transform: rotate(8deg);
+    opacity: .85;
+  }
+  .new-tag {
+    position: absolute;
+    top: -13px; left: -12px;
+    background: var(--red);
+    color: #fff;
+    font-family: "Caveat", cursive;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 3px 13px;
+    border-radius: 3px;
+    transform: rotate(-7deg);
+    box-shadow: 0 3px 7px rgba(0,0,0,.3);
+  }
+
+  /* ---------- DETAILS: EMPTY STATE ---------- */
+  .empty-detail {
+    border: 3px dashed #7a5230;
+    border-radius: 10px;
+    padding: 54px 26px;
+    text-align: center;
+    color: #f0e4d2;
+  }
+  .empty-detail .emoji { font-size: 2rem; }
+  .empty-detail .hand {
+    font-family: "Caveat", cursive;
+    font-size: 1.4rem;
+    color: #ffe9c4;
+    margin: 8px 0 6px;
+  }
+  .empty-detail .type {
+    font-family: "Special Elite", monospace;
+    font-size: 0.78rem;
+    color: #c9b48f;
+  }
+
+  /* ---------- DETAILS: LETTER ---------- */
+  .letter {
+    position: relative;
+    background: var(--paper);
+    padding: 30px 28px 26px;
+    border-radius: 2px;
+    transform: rotate(0.6deg);
+    box-shadow: 0 14px 34px rgba(0,0,0,.5);
+    animation: dropin .28s ease-out;
+  }
+  @keyframes dropin {
+    from { opacity: 0; transform: rotate(0.6deg) translateY(-26px); }
+    to   { opacity: 1; transform: rotate(0.6deg) translateY(0); }
+  }
+  .tape {
+    position: absolute;
+    top: -10px;
+    width: 88px; height: 22px;
+    background: rgba(255,245,200,.62);
+    box-shadow: 0 1px 3px rgba(0,0,0,.18);
+  }
+  .tape.l { left: 18px; transform: rotate(-4deg); }
+  .tape.r { right: 18px; transform: rotate(3deg); }
+  .close-btn {
+    position: absolute;
+    top: 12px; right: 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: "Special Elite", monospace;
+    font-size: 0.85rem;
+    color: var(--ink);
+    padding: 4px 6px;
+  }
+  .close-btn:hover { color: var(--red); }
+  .letterhead { display: flex; align-items: center; gap: 12px; }
+  .crest {
+    width: 46px; height: 46px;
+    flex: none;
+    border-radius: 50%;
+    border: 2px solid var(--green);
+    background: #eef7ef;
+    display: grid;
+    place-items: center;
+    font-size: 1.35rem;
+  }
+  .letterhead .org { font-weight: 700; font-size: 0.95rem; letter-spacing: .4px; }
+  .letterhead .sub { font-family: "Special Elite", monospace; font-size: 0.72rem; color: #6b6b63; }
+  .rule { border-top: 3px double #2b2b28; margin: 14px 0 12px; }
+  .refrow {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-family: "Special Elite", monospace;
+    font-size: 0.76rem;
+    color: #4c4c44;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .label-pill {
+    display: inline-block;
+    color: #fff;
+    font-family: "Archivo Black", sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    padding: 6px 14px;
+    border-radius: 3px;
+    margin-bottom: 12px;
+  }
+  .letter h2 {
+    font-family: "Archivo Black", sans-serif;
+    text-transform: uppercase;
+    font-size: clamp(1.1rem, 3vw, 1.5rem);
+    line-height: 1.25;
+    margin-bottom: 12px;
+  }
+  .letter .body { font-size: 0.94rem; line-height: 1.65; }
+  .sticky-note {
+    position: relative;
+    background: #FFF3A6;
+    font-family: "Caveat", cursive;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #4a3c00;
+    padding: 12px 16px;
+    margin: 20px 0 24px;
+    transform: rotate(-1.4deg);
+    box-shadow: 0 5px 10px rgba(0,0,0,.18);
+  }
+  .bottom-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .signature .name {
+    font-family: "Caveat", cursive;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--blue);
+    line-height: 1;
+  }
+  .signature .line {
+    border-bottom: 1.5px solid #2b2b28;
+    min-width: 150px;
+    margin-top: 2px;
+    padding-bottom: 3px;
+    font-family: "Special Elite", monospace;
+    font-size: 0.66rem;
+    color: #4c4c44;
+  }
+  .big-stamp {
+    font-family: "Archivo Black", sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--cat, var(--red));
+    border: 4px solid var(--cat, var(--red));
+    border-radius: 6px;
+    padding: 8px 18px;
+    transform: rotate(-14deg);
+    opacity: .78;
+    animation: stampdown .22s ease-out;
+    -webkit-mask-image: radial-gradient(circle at 18% 34%, rgba(0,0,0,.75) 0 3px, rgba(0,0,0,.95) 3px 99%);
+  }
+  @keyframes stampdown {
+    0% { opacity: 0; transform: rotate(-14deg) scale(1.6); }
+    70% { opacity: .95; transform: rotate(-14deg) scale(.96); }
+    100% { opacity: .78; transform: rotate(-14deg) scale(1); }
+  }
+  .seal {
+    width: 86px; height: 86px;
+    flex: none;
+    border-radius: 50%;
+    border: 3px double var(--red);
+    color: var(--red);
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-family: "Special Elite", monospace;
+    font-size: 0.6rem;
+    letter-spacing: 1px;
+    transform: rotate(10deg);
+    opacity: .9;
+    padding: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="board">
+  <div class="cork">
+
+    <div class="sign">
+      <div class="kicker">PAPAN KENYATAAN · TAMAN MELUR</div>
+      <h1>TAMAN <span class="red">NOTICE</span> BOARD</h1>
+      <div class="hand">Latest notices from your Residents Association, newest first</div>
+    </div>
+
+    <div class="filters" id="filters"></div>
+
+    <div class="columns">
+      <div class="col-latest">
+        <div class="col-label">📌 LATEST NOTICES</div>
+        <div class="cards" id="cards"></div>
+      </div>
+      <div class="col-details">
+        <div class="col-label">📄 NOTICE DETAILS</div>
+        <div id="detail"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Sample data — made up for demo purposes only. Newest first after sorting.
+  const notices = [
+    {
+      id: 1, ref: "PPTM/2026/041", date: "2026-11-16", category: "Urgent", emoji: "💧",
+      title: "Water supply interruption on Jalan Kenari this Thursday",
+      text: "The water supply in Taman Melur will be interrupted on Thursday, 19 November 2026, from 9:00 am to 4:00 pm along Jalan Kenari and Jalan Cempaka for pipe replacement works by the water utility. The association apologises for the inconvenience. For updates, check the notice board near the guardhouse.",
+      sticky: "Store enough water the night before!"
+    },
+    {
+      id: 2, ref: "PPTM/2026/040", date: "2026-11-14", category: "Community", emoji: "🧹",
+      title: "Gotong-royong community clean-up this Sunday",
+      text: "Join our gotong-royong this Sunday, 22 November 2026, from 8:00 am to 11:00 am. We will meet at the playground on Jalan Melur. Gloves, rubbish bags and light refreshments will be provided. Please wear comfortable clothes and bring a hat.",
+      sticky: "Bring the kids too, everyone is welcome :)"
+    },
+    {
+      id: 3, ref: "PPTM/2026/038", date: "2026-11-10", category: "Community", emoji: "🏛️",
+      title: "Annual general meeting at the community hall",
+      text: "The Residents Association Annual General Meeting will be held on Saturday, 5 December 2026, at 8:00 pm in the community hall. All residents are invited to review the year's accounts, hear committee reports and vote for the new committee members. Light supper will be served after the meeting.",
+      sticky: "Come and have your say, ya!"
+    },
+    {
+      id: 4, ref: "PPTM/2026/036", date: "2026-11-05", category: "Maintenance", emoji: "🔧",
+      title: "Streetlight repair along Jalan Cempaka",
+      text: "The contractor will replace faulty streetlight bulbs along Jalan Cempaka and the playground car park from Monday, 9 November 2026, between 10:00 am and 3:00 pm. Some areas may be temporarily dim in the evening while the works are carried out.",
+      sticky: "Report any dark spot to the guardhouse."
+    }
+  ];
+
+  const CAT = {
+    Urgent:      { color: "#D92D20", pin: "#D92D20", paper: "#FFFFFF", pill: "#D92D20" },
+    Community:   { color: "#0E8A4F", pin: "#0E8A4F", paper: "#FFF9D6", pill: "#0E8A4F" },
+    Maintenance: { color: "#4E46C9", pin: "#4E46C9", paper: "#EEF4FF", pill: "#4E46C9" }
+  };
+  const TILTS = ["-1.4deg", "1deg", "-0.6deg", "1.3deg"];
+
+  const fmtDate = d => new Date(d + "T00:00:00")
+    .toLocaleDateString("en-MY", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+
+  const sorted = () => notices.slice().sort((a, b) => b.date.localeCompare(a.date));
+
+  let activeFilter = "All";
+  let selectedId = null;
+
+  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  function renderFilters() {
+    const defs = [
+      { key: "All", label: "All notices", cls: "all" },
+      { key: "Urgent", label: "Urgent", cls: "urgent" },
+      { key: "Community", label: "Community", cls: "community" }
+    ];
+    document.getElementById("filters").innerHTML = defs.map(d => {
+      const n = d.key === "All" ? notices.length : notices.filter(x => x.category === d.key).length;
+      return `<button class="tag ${d.cls} ${activeFilter === d.key ? "active" : ""}" data-filter="${d.key}">
+        ${d.label}<span class="count">${n}</span><span class="tick">✓</span></button>`;
+    }).join("");
+  }
+
+  function renderCards() {
+    const list = sorted().filter(n =>
+      activeFilter === "All" || n.category === activeFilter);
+    const box = document.getElementById("cards");
+    if (!list.length) {
+      box.innerHTML = `<p class="cdate">Nothing pinned here right now.</p>`;
+      return;
+    }
+    box.innerHTML = list.map((n, i) => {
+      const c = CAT[n.category];
+      const idx = sorted().findIndex(x => x.id === n.id);
+      return `<div class="card ${n.id === selectedId ? "selected" : ""}"
+        style="--tilt:${TILTS[idx % TILTS.length]}; --cardbg:${c.paper}; --cat:${c.color}; --pin:${c.pin}"
+        data-id="${n.id}">
+        <div class="pin"></div>
+        ${idx === 0 && activeFilter === "All" ? `<div class="new-tag">New!</div>` : ""}
+        <div class="stamp">${n.category}</div>
+        <div class="cat">${n.emoji} ${n.category}</div>
+        <h3>${esc(n.title)}</h3>
+        <div class="cdate">${fmtDate(n.date)}</div>
+        <div class="read-hint">${n.id === selectedId ? "reading now ✓" : "tap to read →"}</div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderDetail() {
+    const box = document.getElementById("detail");
+    const n = notices.find(x => x.id === selectedId);
+    if (!n) {
+      box.innerHTML = `<div class="empty-detail">
+        <div class="emoji">📌</div>
+        <div class="hand">Tap any notice on the left to pin it up here</div>
+        <div class="type">The full notice will appear on this board</div>
+      </div>`;
+      return;
+    }
+    const c = CAT[n.category];
+    box.innerHTML = `<div class="letter" style="--cat:${c.color}">
+      <div class="tape l"></div><div class="tape r"></div>
+      <button class="close-btn" id="closeLetter">✕ close</button>
+      <div class="letterhead">
+        <div class="crest">🏡</div>
+        <div>
+          <div class="org">PERSATUAN PENDUDUK TAMAN MELUR</div>
+          <div class="sub">Taman Melur Residents Association</div>
+        </div>
+      </div>
+      <div class="rule"></div>
+      <div class="refrow">
+        <span>Ref: ${n.ref}</span>
+        <span>${fmtDate(n.date)}</span>
+      </div>
+      <span class="label-pill" style="background:${c.pill}">${n.emoji} ${n.category.toUpperCase()} NOTICE</span>
+      <h2>${esc(n.title)}</h2>
+      <p class="body">${esc(n.text)}</p>
+      <div class="sticky-note">✎ ${esc(n.sticky)}</div>
+      <div class="bottom-row">
+        <div class="signature">
+          <div class="name">Hj. Rahman</div>
+          <div class="line">Secretary, Residents Association</div>
+        </div>
+        <div class="big-stamp">${n.category}</div>
+        <div class="seal">PPTM<br>★ OFFICIAL ★<br>COMMITTEE</div>
+      </div>
+    </div>`;
+    document.getElementById("closeLetter").addEventListener("click", () => {
+      selectedId = null;
+      renderCards();
+      renderDetail();
+    });
+  }
+
+  function renderAll() { renderFilters(); renderCards(); renderDetail(); }
+
+  document.addEventListener("click", e => {
+    const tag = e.target.closest(".tag");
+    if (tag) {
+      activeFilter = tag.dataset.filter;
+      if (selectedId && !notices.some(n => n.id === selectedId &&
+        (activeFilter === "All" || n.category === activeFilter))) {
+        selectedId = null;
+      }
+      renderAll();
+      return;
+    }
+    const card = e.target.closest(".card");
+    if (card) {
+      selectedId = Number(card.dataset.id);
+      renderAll();
+      if (window.innerWidth < 900) {
+        document.querySelector(".col-details").scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  });
+
+  renderAll();
+</script>
+</body>
+</html>
